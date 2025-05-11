@@ -14,12 +14,11 @@ import {
   useColorModeValue,
   CircularProgress,
   Alert,
-  AlertIcon
+  AlertIcon,
+  Stack
 } from '@chakra-ui/react';
 
-
 const LoginPage = ({ onToggle }) => {
-
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -27,30 +26,27 @@ const LoginPage = ({ onToggle }) => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
-  // Function to handle form submission
   const handleSubmit = async (e) => {
-    e.preventDefault(); // Prevent default form submission behavior
+    e.preventDefault();
     console.log('----------------->>>>>')
     setIsLoading(true);
 
     try {
-      // Send login request to backend
       const response = await axios.post('http://localhost:5000/login',
         { email, password },
-        { withCredentials: true, headers: { 'Content-Type': 'application/json' } } // Set Content-Type header to application/json
+        { withCredentials: true, headers: { 'Content-Type': 'application/json' } }
       );
       console.log(response.data)
       localStorage.setItem('token', response.data.access_token);
       localStorage.setItem('fname', response.data.fname);
       localStorage.setItem('lname', response.data.lname);
       setLoggedIn(true);
-      // Clear input fields
       setEmail('');
       setPassword('');
       setError('');
     } catch (error) {
-      console.error('Login failed:', error.message); // Handle login error
-      setError('Invalid email or password'); // Set error message
+      console.error('Login failed:', error.message);
+      setError('Invalid email or password');
     }
     setIsLoading(false);
   };
@@ -94,8 +90,16 @@ const LoginPage = ({ onToggle }) => {
             </form>
           </Box>
           <Box textAlign="center">
-            <Text>Don't have an account?</Text>
-            <Link as={RouterLink} to="/" color="teal.500">Register here</Link>
+          <Text>Don't have an account?{" "}
+          <Text as="span" fontWeight="bold" color="teal.500">
+          Register as:
+          </Text>
+          </Text>
+            <Stack direction="row" justify="center" mt={2}>
+              <Link as={RouterLink} to="/register" color="teal.500">Candidate</Link>
+              <Text mx={2}>or</Text>
+              <Link as={RouterLink} to="/register-company" color="teal.500">Company</Link>
+            </Stack>
           </Box>
         </Box>
       </Box>

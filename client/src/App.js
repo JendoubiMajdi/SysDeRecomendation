@@ -10,6 +10,7 @@ import SavedJobsPage from './components/SavedJobs';
 import Layout from './components/Layout';
 import AccountInfoForm from './components/AccountInfo';
 import JobsPage from './components/JobsPage';
+import CompanyRegister from './components/CompanyRegister';
 
 
 function App() {
@@ -31,6 +32,7 @@ function App() {
               <Route path="/get-saved-jobs" element={<SavedJobsPage />} />
               <Route path="/user/account" element={<AccountInfoForm />} />
               <Route path="/jobs" element={<JobsPage />} />
+              <Route path="/register-company" element={<CompanyRegister />} />
             </Routes>
           </Layout>
         </Router>
