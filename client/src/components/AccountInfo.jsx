@@ -1,9 +1,12 @@
 import React, { useEffect } from 'react';
 import {
   Box, FormControl, FormLabel, Input, Button, VStack, useColorModeValue,
-  Heading, useToast, Grid, GridItem, Tag, TagLabel
+  Heading, useToast, Grid,
+  GridItem, Tag, TagLabel
 } from '@chakra-ui/react';
 import axios from 'axios';
+
+// import { Box, Heading, VStack, FormControl, FormLabel, Input, Button, useColorModeValue } from '@chakra-ui/react';
 
 const InfoCard = ({ title, children }) => {
   const cardBg = useColorModeValue('white', 'gray.700');
@@ -30,6 +33,7 @@ const InfoCard = ({ title, children }) => {
   );
 };
 
+
 function AccountInfoForm() {
   const toast = useToast();
 
@@ -37,16 +41,16 @@ function AccountInfoForm() {
     firstname: '',
     lastname: '',
     resume: '',
-    education: {
-      schoolName: '',
-      major: ''
-    },
-    work_experience: {
-      employerName: '',
-      position: ''
-    },
+    education: {},
+    work_experience: {},
+    // schoolName: '',
+    // major: '',
+    // employerName: '',
+    // position: '',
     tags: [],
   });
+
+
 
   // Fetch account info on component mount
   useEffect(() => {
@@ -57,11 +61,7 @@ function AccountInfoForm() {
             Authorization: `Bearer ${localStorage.getItem('token')}`
           }
         });
-        setAccountInfo({
-          ...response.data,
-          education: response.data.education || { schoolName: '', major: '' },
-          work_experience: response.data.work_experience || { employerName: '', position: '' }
-        });
+        setAccountInfo(response.data);
       } catch (error) {
         console.error('Failed to fetch account info', error);
       }
@@ -69,27 +69,16 @@ function AccountInfoForm() {
     fetchAccountInfo();
   }, []);
 
+
   const handleInputChange = (event) => {
     const { name, value } = event.target;
-    
-    if (name.includes('.')) {
-      const [parent, child] = name.split('.');
-      setAccountInfo(prev => ({
-        ...prev,
-        [parent]: {
-          ...prev[parent],
-          [child]: value
-        }
-      }));
-    } else {
-      setAccountInfo(prev => ({ ...prev, [name]: value }));
-    }
+    setAccountInfo(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     try {
-      await axios.post('/user/update', accountInfo, {
+      await axios.post('http://localhost:5000/user/update', accountInfo, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`
         }
@@ -105,7 +94,7 @@ function AccountInfoForm() {
       console.error('Failed to update account info', error);
       toast({
         title: "Update failed.",
-        description: error.response?.data?.message || "Failed to update account information.",
+        description: "Failed to update account information.",
         status: "error",
         duration: 5000,
         isClosable: true,
@@ -114,106 +103,77 @@ function AccountInfoForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <VStack spacing={4} align="stretch">
-        <InfoCard title="Account Info">
-          <Grid templateColumns="repeat(2, 1fr)" gap={6}>
-            <GridItem colSpan={1}>
-              <FormControl isRequired>
-                <FormLabel>First Name</FormLabel>
-                <Input 
-                  name="firstname" 
-                  value={accountInfo.firstname} 
-                  onChange={handleInputChange} 
-                />
-              </FormControl>
-            </GridItem>
-            <GridItem colSpan={1}>
-              <FormControl isRequired>
-                <FormLabel>Last Name</FormLabel>
-                <Input 
-                  name="lastname" 
-                  value={accountInfo.lastname} 
-                  onChange={handleInputChange} 
-                />
-              </FormControl>
-            </GridItem>
-          </Grid>
-        </InfoCard>
+    <VStack spacing={4} align="stretch">
+      <InfoCard title="Account Info">
+        <Grid templateColumns="repeat(2, 1fr)" gap={6}>
+          <GridItem colSpan={1}>
+            <FormControl isRequired>
+              <FormLabel>First Name</FormLabel>
+              <Input name="firstname" value={accountInfo.firstname} onChange={handleInputChange} />
+            </FormControl>
+          </GridItem>
+          <GridItem colSpan={1}>
+            <FormControl isRequired>
+              <FormLabel>Last Name</FormLabel>
+              <Input name="lastname" value={accountInfo.lastname} onChange={handleInputChange} />
+            </FormControl>
+          </GridItem>
+        </Grid>
+      </InfoCard>
 
-        <InfoCard title="Education">
-          <Grid templateColumns="repeat(2, 1fr)" gap={6}>
-            <GridItem colSpan={1}>
-              <FormControl isRequired>
-                <FormLabel>School Name</FormLabel>
-                <Input 
-                  name="education.schoolName" 
-                  value={accountInfo.education.schoolName} 
-                  onChange={handleInputChange} 
-                />
-              </FormControl>
-            </GridItem>
-            <GridItem colSpan={1}>
-              <FormControl isRequired>
-                <FormLabel>Major</FormLabel>
-                <Input 
-                  name="education.major" 
-                  value={accountInfo.education.major} 
-                  onChange={handleInputChange} 
-                />
-              </FormControl>
-            </GridItem>
-          </Grid>
-        </InfoCard>
 
-        <InfoCard title="Work Experience">
-          <Grid templateColumns="repeat(2, 1fr)" gap={6}>
-            <GridItem colSpan={1}>
-              <FormControl isRequired>
-                <FormLabel>Employer Name</FormLabel>
-                <Input 
-                  name="work_experience.employerName" 
-                  value={accountInfo.work_experience.employerName} 
-                  onChange={handleInputChange} 
-                />
-              </FormControl>
-            </GridItem>
-            <GridItem colSpan={1}>
-              <FormControl isRequired>
-                <FormLabel>Position</FormLabel>
-                <Input 
-                  name="work_experience.position" 
-                  value={accountInfo.work_experience.position} 
-                  onChange={handleInputChange} 
-                />
-              </FormControl>
-            </GridItem>
-          </Grid>
-        </InfoCard>
+      <InfoCard title="Education">
+        <Grid templateColumns="repeat(2, 1fr)" gap={6}>
+          <GridItem colSpan={1}>
+            <FormControl isRequired>
+              <FormLabel>School Name</FormLabel>
+              <Input name="schoolName" value={accountInfo.education.schoolName} onChange={handleInputChange} />
+            </FormControl>
+          </GridItem>
+          <GridItem colSpan={1}>
+            <FormControl isRequired>
+              <FormLabel>Major</FormLabel>
+              <Input name="major" value={accountInfo.education.major} onChange={handleInputChange} />
+            </FormControl>
+          </GridItem>
+          {/* Include DatePicker components for dates */}
+        </Grid>
+      </InfoCard>
 
-        <InfoCard title="Skills">
-          <Box display="flex" flexWrap="wrap" mb={2}>
-            {accountInfo.tags.map((tag, index) => (
-              <Tag size="lg" key={index} borderRadius="full" variant="solid" colorScheme="green" m={1}>
-                <TagLabel>{tag}</TagLabel>
-              </Tag>
-            ))}
-          </Box>
-        </InfoCard>
+      <InfoCard title="Work Experience">
+        <Grid templateColumns="repeat(2, 1fr)" gap={6}>
+          <GridItem colSpan={1}>
+            <FormControl isRequired>
+              <FormLabel>Employer Name</FormLabel>
+              <Input name="employerName" value={accountInfo.work_experience.employerName} onChange={handleInputChange} />
+            </FormControl>
+          </GridItem>
+          <GridItem colSpan={1}>
+            <FormControl isRequired>
+              <FormLabel>Position</FormLabel>
+              <Input name="position" value={accountInfo.work_experience.position} onChange={handleInputChange} />
+            </FormControl>
+          </GridItem>
+          {/* Include DatePicker components for dates */}
+        </Grid>
+      </InfoCard>
 
-        <GridItem textAlign="center" colSpan={2}>
-          <Button 
-            mt={4} 
-            colorScheme="blue" 
-            type="submit" 
-            width="20%"
-            isLoading={false} // You can add loading state if needed
-          >
-            Update Info
-          </Button>
-        </GridItem>
-      </VStack>
-    </form>
+      <InfoCard title="Skills">
+        {/* Skills form logic here */}
+        <Box display="flex" flexWrap="wrap" mb={2}>
+          {accountInfo.tags.map((tag, index) => (
+            <Tag size="lg" key={index} borderRadius="full" variant="solid" colorScheme="green" m={1}>
+              <TagLabel>{tag}</TagLabel>
+              {/* <TagCloseButton onClick={() => removeTag(index)} /> */}
+            </Tag>
+          ))}
+        </Box>
+      </InfoCard>
+      <GridItem textAlign="center" colSpan={2}>
+        <Button mt={4} colorScheme="blue" type="submit" width="20%">Update Info</Button>
+      </GridItem>
+
+    </VStack>
   );
 }
 

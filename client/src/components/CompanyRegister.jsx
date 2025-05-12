@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import {
-  Box,
+ Box,
   Button,
   FormControl,
   FormLabel,
@@ -16,7 +16,7 @@ import {
   Textarea,
   Select,
   Alert,
-  AlertIcon
+  AlertIcon,
 } from '@chakra-ui/react';
 
 const CompanyRegister = () => {
@@ -62,7 +62,8 @@ const CompanyRegister = () => {
       website,
       description,
       email,
-      password,
+      password: password,
+      password2: confirmPassword,
       phone,
       address,
       hiringManager,
@@ -71,7 +72,7 @@ const CompanyRegister = () => {
     };
 
     try {
-      const response = await axios.post('http://localhost:5000/register/company', companyData, {
+      const response = await axios.post('http://localhost:5000/', companyData, {
         headers: { 'Content-Type': 'application/json' }
       });
       setMessage(response.data.message || 'Registration successful!');

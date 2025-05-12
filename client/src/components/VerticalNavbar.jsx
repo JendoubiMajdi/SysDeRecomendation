@@ -10,6 +10,11 @@ const VerticalNavbar = () => {
     const location = useLocation();
     const isActive = (path) => location.pathname === path;
 
+    // Don't render navbar if on company register page
+    if (location.pathname === '/register-company') {
+        return null;
+    }
+
     const handleLogout = async () => {
         try {
             console.log('logout------------->>>', localStorage.getItem('token'))
@@ -64,7 +69,6 @@ const VerticalNavbar = () => {
                 </Menu>
             </VStack>
         </Box>
-        
     );
 }
 

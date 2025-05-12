@@ -27,58 +27,96 @@ CORS(app, supports_credentials=True)
 @app.route('/', methods=["POST", "GET"])
 def register():
     data = request.json
-    user = data.get("fullname")
-    firstname = data.get('firstname')
-    lastname = data.get('lastname')
+
+    # Champs communs
     email = data.get("email")
     password1 = data.get("password")
     password2 = data.get("password2")
+
+    # Champs utilisateur
+    user = data.get("fullname")
+    firstname = data.get('firstname')
+    lastname = data.get('lastname')
     resume = data.get('resume', '')
-    education = data.get('education', '')
-    work_experience = data.get('workExperience', '')
-    tags = data.get('skills', '')
+    education = data.get('education', '[]')
+    work_experience = data.get('workExperience', '[]')
+    tags = data.get('skills', '[]')
 
-    print('education', education)
-    print('work_experience', work_experience)
-    print('tags', tags)
- 
-    doc = nlp(resume)
-    skills = []
-    for ent in doc.ents:
-        print(ent.text, ent.label_)
-        if ent.label_ in ['ORG', 'PERSON', 'GPE']:
-            skills.append(ent.text)
+    # Champs entreprise
+    companyName = data.get('companyName', '')
+    industry = data.get('industry', '')
+    companySize = data.get('companySize', '')
+    foundedYear = data.get('foundedYear', '')
+    website = data.get('website', '')
+    description = data.get('description', '')
+    phone = data.get('phone', '')
+    address = data.get('address', '')
+    hiringManager = data.get('hiringManager', '')
+    hiringEmail = data.get('hiringEmail', '')
+    jobType = data.get('jobType', '')
 
-    # Check if user or email already exists
-    user_found = records.find_one({"name": user})
-    email_found = records.find_one({"email": email})
-    if user_found:
-        return jsonify({"message": "User already exists"}), 400
-    if email_found:
-        print('email exist')
-        return jsonify({"message": "Email already exists"}), 400
+    # Vérification des mots de passe
     if password1 != password2:
-        print('mismatch')
         return jsonify({"message": "Passwords do not match"}), 400
 
-    # Hash the password
-    hashed_password = bcrypt.hashpw(password2.encode('utf-8'), bcrypt.gensalt())
+    # Vérification email déjà utilisé
+    email_found = records.find_one({"email": email})
+    if email_found:
+        return jsonify({"message": "Email already exists"}), 400
 
-    # Insert user into the database
-    user_input = {'name': user, 
-                  'firstname': firstname, 
-                  'lastname': lastname, 
-                  'email': email, 
-                  'password': hashed_password, 
-                  'skills': skills,
-                  'education': json.loads(education),
-                  'work_experience': json.loads(work_experience),
-                  'tags': json.loads(tags)
-                  }
-    
+    # Détection de type (utilisateur ou entreprise)
+    is_company = bool(companyName)
+
+    if is_company:
+        role = 'company'
+        user_input = {
+            'email': email,
+            'password': bcrypt.hashpw(password2.encode('utf-8'), bcrypt.gensalt()),
+            'companyName': companyName,
+            'industry': industry,
+            'companySize': companySize,
+            'foundedYear': foundedYear,
+            'website': website,
+            'description': description,
+            'phone': phone,
+            'address': address,
+            'hiringManager': hiringManager,
+            'hiringEmail': hiringEmail,
+            'jobType': jobType,
+            'role': role
+        }
+    else:
+        if not user:
+            return jsonify({"message": "Fullname is required"}), 400
+
+        # Vérifier si le nom complet existe déjà
+        user_found = records.find_one({"name": user})
+        if user_found:
+            return jsonify({"message": "User already exists"}), 400
+
+        doc = nlp(resume)
+        skills = []
+        for ent in doc.ents:
+            if ent.label_ in ['ORG', 'PERSON', 'GPE']:
+                skills.append(ent.text)
+
+        role = 'user'
+        user_input = {
+            'name': user,
+            'firstname': firstname,
+            'lastname': lastname,
+            'email': email,
+            'password': bcrypt.hashpw(password2.encode('utf-8'), bcrypt.gensalt()),
+            'resume': resume,
+            'skills': skills,
+            'education': json.loads(education),
+            'work_experience': json.loads(work_experience),
+            'tags': json.loads(tags),
+            'role': role
+        }
+
+    # Insertion dans la base
     records.insert_one(user_input)
-    # access_token = create_access_token(identity=user.user_id)
-
     return jsonify({"message": "User registered successfully"}), 200
 
 @app.route("/login", methods=["GET", "POST"])
@@ -89,7 +127,8 @@ def login():
 
     # Check if email exists in the database
     email_found = records.find_one({"email": email})
-    if email_found:
+    role = email_found['role']
+    if email_found and role == 'user':
         email_val = email_found['email']
         firstname = email_found['firstname']
         lastname = email_found['lastname']
@@ -104,6 +143,21 @@ def login():
             # session["firstname"] = firstname
             access_token = create_access_token(identity=email_found['email'])
             resp = jsonify({"message": "Login successful", "fname": firstname, "lname": lastname, "access_token": access_token})
+            return resp, 200
+        else:
+            return jsonify({"message": "Wrong password"}), 401
+    elif email_found and role == 'company':
+        email_val = email_found['email']
+        companyName = email_found['companyName']
+        passwordcheck = email_found['password']
+        # Encode the password and check if it matches
+        if bcrypt.checkpw(password.encode('utf-8'), passwordcheck):
+            # session.permanent = True
+            # session.modified = True
+            session["email"] = email_val
+            session["companyName"] = companyName
+            access_token = create_access_token(identity=email_found['email'])
+            resp = jsonify({"message": "Login successful", "companyName": companyName, "access_token": access_token})
             return resp, 200
         else:
             return jsonify({"message": "Wrong password"}), 401
@@ -291,37 +345,6 @@ def get_account_info():
     
     return jsonify(account_info), 200
 
-
-@app.route("/user/update", methods=["POST"])
-@jwt_required()
-def update_account_info():
-    current_user = get_jwt_identity()
-    data = request.json
-
-    # Validate required fields
-    if not data:
-        return jsonify({"message": "No data provided"}), 400
-
-    # Update user data in MongoDB
-    update_data = {
-        "firstname": data.get("firstname"),
-        "lastname": data.get("lastname"),
-        "education": data.get("education", {}),
-        "work_experience": data.get("work_experience", {}),
-        "tags": data.get("tags", [])
-    }
-
-    # Remove None values (optional)
-    update_data = {k: v for k, v in update_data.items() if v is not None}
-
-    # Update the database
-    records.update_one(
-        {"email": current_user},
-        {"$set": update_data}
-    )
-
-    return jsonify({"message": "Account updated successfully"}), 200
-
     
-if __name__ == '_main_':
+if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True)

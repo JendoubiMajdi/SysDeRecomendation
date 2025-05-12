@@ -1,36 +1,7 @@
-# Python virtual environments
-venv/
-env/
-ENV/
-.myenv/
-myenv/
-
-# Python cache
-__pycache__/
-*.py[cod]
-*.so
-
-# Environment files
+src/data
+myenv
+saved_models
 .env
-.env.*
-
-# Jupyter notebooks
-notebooks/
-*.ipynb_checkpoints
-
-# Model files and large data
-src/data/
-saved_models/
-
-# VSCode settings
-.vscode/
-
-# OS/system files
-.DS_Store
-Thumbs.db
-
-# Frontend
-client/node_modules/
+client/node_modules
 client/.env
-client/.env.*
-client/dist/
+notebooks
